@@ -4,15 +4,15 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.58.0"
     }    
+  }
 
-  #     cloud {
-  #   organization = "DevopsKitchenWorkshop"
+  cloud {
+    organization = "DevopsKitchenWorkshop"
 
-  #   workspaces {
-  #     name = "TRANS_workspace"
-  #     project = "Automate_Transitgateway_deploy"
-  #   }
-
+    workspaces {
+      name = "TRANS_workspace"
+      project = "Automate_Transitgateway_deploy"
+    }
    }
 }
 # Configure aws provider

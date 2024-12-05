@@ -1,9 +1,7 @@
 # Automate Transit gateway deployment
 
 <aside>
-📌
-
-#week_eleven_&_Twelve - Automate Transit gateway deployment utilizing CircleCI CI/CD &
+week_eleven_&_Twelve - Automate Transit gateway deployment utilizing CircleCI CI/CD &
 Terraform IaC
 duration: 2 weeks
 ForgTech company wanna test your ability to type down a clean code by Deploying the structure of resources. This will help you to build a
