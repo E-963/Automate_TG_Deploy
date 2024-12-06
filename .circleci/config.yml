@@ -1,24 +1,22 @@
 version: 2.1
 
+# Define the executors to be used in the jobs
 executors:
   terraform-executor:
     docker:
       - image: hashicorp/terraform:1.5.0  # Use the official Terraform Docker image
+    working_directory: ~/repo  # Set the working directory for the executor
 
+# Define the jobs to be executed
 jobs:
-  install_awscli:
-    executor: terraform-executor
-    steps:
-      - run:
-          name: Install AWS CLI
-          command: |
-            apk add --no-cache python3 py3-pip  # Install Python and pip
-            pip3 install awscli  # Install AWS CLI using pip
-
   prepare:
     executor: terraform-executor
     steps:
       - checkout  # Check out the code from the repository
+      - run:
+          name: Install AWS CLI
+          command: |
+            apt-get update && apt-get install -y awscli  # Install AWS CLI for AWS interactions
       - run:
           name: Terraform Init
           command: terraform init  # Initialize Terraform configuration
@@ -37,9 +35,6 @@ jobs:
             echo "Saving plan to workspace"  # Inform about saving the plan
             circleci workspace save tfplan_tgw  # Save the plan to CircleCI workspace
 
-    manual_approval:
-      type: approval  # Define a manual approval step
-
   apply:
     executor: terraform-executor
     steps:
@@ -49,7 +44,7 @@ jobs:
           command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
 
     approve-destroy:
-       type: approval  # Define a manual approval step for destruction
+    type: approval  # Define a manual approval step for destruction
 
   terraform-destroy:
     executor: terraform-executor
@@ -62,41 +57,21 @@ jobs:
           name: Terraform Destroy
           command: terraform destroy -auto-approve  # Destroy the infrastructure without confirmation
 
+# Define the workflows to orchestrate the jobs
 workflows:
   version: 2
   tgw_deployment:
     jobs:
-      - install_awscli  # Run the AWS CLI installation job first
-      - prepare:
-          requires:
-            - install_awscli  # Ensure this job runs after AWS CLI installation
-      - plan:
+      - prepare  # Run the prepare job first
+      - plan:  # Ensure this matches the job name defined above
           requires:
             - prepare  # Run the plan job after prepare
-      - manual_approval:
+      - approve-apply:
+          type: approval  # Define a manual approval step
           requires:
             - plan  # Wait for manual approval after the plan job
       - apply:
           requires:
-            - manual_approval  # Apply the plan after approval
-
-  terraform_workflow:
-    jobs:
-      - plan:
-          requires:
-            - prepare  # Ensure the prepare job runs before the plan
-      - approve-apply:
-          requires:
-            - plan  # Wait for approval after the plan job
-      - apply:
-          requires:
             - approve-apply  # Apply the plan after approval
-      - approve-destroy:
-          requires:
-            - apply  # Wait for approval before destruction
-      - terraform-destroy:
-          requires:
-            - approve-destroy  # Destroy the infrastructure after approval
-          filters:
-            branches:
-              only: main  # Only run this job on the main branch
+
+  
