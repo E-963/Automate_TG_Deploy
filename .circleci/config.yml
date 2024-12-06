@@ -1,60 +1,75 @@
 version: 2.1
 
 executors:
-  terraform-executor:
+  terraform:
     docker:
-      - image: hashicorp/terraform:latest
+      - image: hashicorp/terraform:1.5.0
     working_directory: ~/repo
 
 jobs:
-  prepare:
-    executor: terraform-executor
+  terraform-plan:
+    executor: terraform
     steps:
       - checkout
       - run:
-          name: Install AWS CLI
-          command: |
-            apt-get update && apt-get install -y awscli
+          name: Install jq
+          command: apk add --no-cache jq  # Use this if your image supports apk (Alpine Linux)
       - run:
-          name: Terraform Init
+          name: Initialize Terraform
           command: terraform init
-
-  plan:
-    executor: terraform-executor
-    steps:
-      - checkout
-      - run:
-          name: Terraform Validate
-          command: terraform validate
       - run:
           name: Terraform Plan
+          command: terraform plan -out=tfplan
+      - run:
+          name: Review Plan Output
           command: |
-            terraform plan -out=tfplan_tgw
-            echo "Saving plan to workspace"
-            circleci workspace save tfplan_tgw
+            terraform show -json tfplan | jq '.resource_changes[] | {type: .type, name: .name, change: .change}' > plan_output.json
+            cat plan_output.json  # Display the output in the console
 
-    manual_approval:
-    type: approval
+    approve-apply:
+      type: approval
 
-  apply:
-    executor: terraform-executor
+  terraform-apply:
+    executor: terraform
     steps:
       - checkout
       - run:
-          name: Apply the Terraform Plan
-          command: terraform apply "tfplan_tgw"
+          name: Initialize Terraform
+          command: terraform init
+      - run:
+          name: Terraform Apply
+          command: terraform apply -auto-approve
+
+    approve-destroy:
+      type: approval
+
+  terraform-destroy:
+    executor: terraform
+    steps:
+      - checkout
+      - run:
+          name: Initialize Terraform
+          command: terraform init
+      - run:
+          name: Terraform Destroy
+          command: terraform destroy -auto-approve
 
 workflows:
-  version: 2
-  tgw_deployment:
+  terraform-workflow:
     jobs:
-      - prepare
-      - plan:
+      - terraform-plan
+      - approve-apply:
           requires:
-            - prepare
-      - manual_approval:
+            - terraform-plan
+      - terraform-apply:
           requires:
-            - plan
-      - apply:
+            - approve-apply
+      - approve-destroy:
           requires:
-            - manual_approval
+            - terraform-apply
+      - terraform-destroy:
+          requires:
+            - approve-destroy
+          filters:
+            branches:
+              only: main
