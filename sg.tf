@@ -4,76 +4,72 @@ resource "aws_security_group" "vpc_A_secgrp" {
   description = "Allow SSH inbound traffic and all outbound traffic"
   vpc_id      = aws_vpc.vpc_A_auto_trans.id
 
-    tags        = {
+  tags = {
     Name        = "vpc_A_secgrp"
     Environment = "terraformChamps"
     Owner       = "Soo28"
-        }
+  }
 }
 
-  resource "aws_vpc_security_group_ingress_rule" "allow_SSH-1" {
+resource "aws_vpc_security_group_ingress_rule" "allow_SSH_vpc_A" {
   security_group_id = aws_security_group.vpc_A_secgrp.id
-  #cidr_ipv4        = aws_vpc.vpc_A_auto_trans.cidr_block
   cidr_ipv4         = "0.0.0.0/0"
   from_port         = 22
   ip_protocol       = "tcp"
   to_port           = 22
 }
 
- resource "aws_vpc_security_group_ingress_rule" "allow_SSH-1" {
+resource "aws_vpc_security_group_ingress_rule" "allow_HTTP_vpc_A" {
   security_group_id = aws_security_group.vpc_A_secgrp.id
-  #cidr_ipv4        = aws_vpc.vpc_A_auto_trans.cidr_block
   cidr_ipv4         = "0.0.0.0/0"
   from_port         = 80
   ip_protocol       = "tcp"
   to_port           = 80
 }
-resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4-1" {
+
+resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4_vpc_A" {
   security_group_id = aws_security_group.vpc_A_secgrp.id
   cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"       # semantically equivalent to all ports
+  ip_protocol       = "-1"  # semantically equivalent to all ports
 }
-
 
 ### Create Security group for VPC_B EC2 Instances
 resource "aws_security_group" "vpc_B_secgrp" {
-  name        = "secgrp-1"
+  name        = "secgrp-2"  # Changed name to avoid duplication
   description = "Allow SSH inbound traffic and all outbound traffic"
   vpc_id      = aws_vpc.vpc_B_auto_trans.id
 
-    tags        = {
+  tags = {
     Name        = "vpc_B_secgrp"
     Environment = "terraformChamps"
     Owner       = "Soo28"
-        }
+  }
 }
 
-  resource "aws_vpc_security_group_ingress_rule" "allow_SSH-1" {
+resource "aws_vpc_security_group_ingress_rule" "allow_SSH_vpc_B" {
   security_group_id = aws_security_group.vpc_B_secgrp.id
-  #cidr_ipv4        = aws_vpc.vpc_B_auto_trans.cidr_block
   cidr_ipv4         = "0.0.0.0/0"
   from_port         = 22
   ip_protocol       = "tcp"
   to_port           = 22
 }
 
- resource "aws_vpc_security_group_ingress_rule" "allow_SSH-1" {
+resource "aws_vpc_security_group_ingress_rule" "allow_HTTP_vpc_B" {
   security_group_id = aws_security_group.vpc_B_secgrp.id
-  #cidr_ipv4        = aws_vpc.vpc_B_auto_trans.cidr_block
   cidr_ipv4         = "0.0.0.0/0"
   from_port         = 80
   ip_protocol       = "tcp"
   to_port           = 80
 }
-resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4-1" {
+
+resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4_vpc_B" {
   security_group_id = aws_security_group.vpc_B_secgrp.id
   cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"          # semantically equivalent to all ports
+  ip_protocol       = "-1"  # semantically equivalent to all ports
 }
 
-
 # Create Bastion Host security group
-resource "aws_security_group" "bastion-host-sg" {
+resource "aws_security_group" "bastion_host_sg" {
   name        = "bastion-host-sg"
   description = "Allow SSH to bastion host"
   vpc_id      = aws_vpc.vpc_c_auto_trans.id
@@ -91,7 +87,8 @@ resource "aws_security_group" "bastion-host-sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
- tags = {
+
+  tags = {
     Name        = "bastionSG"
     Environment = "terraformChamps"
     Owner       = "soo28"
