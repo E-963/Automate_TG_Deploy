@@ -3,70 +3,73 @@ version: 2.1
 executors:
   terraform-executor:
     docker:
-      - image: hashicorp/terraform:1.5.0  # Use the official Terraform Docker image
+      - image: hashicorp/terraform:latest
 
 jobs:
   prepare:
     executor: terraform-executor
     steps:
-      - checkout  # Check out the code from the repository
+      - checkout
       - run:
-          name: Terraform Init
-          command: terraform init  # Initialize Terraform configuration
+          name: Install AWS CLI
+          command: |
+            apt-get update && apt-get install -y awscli
+      - run:
+          name: Install Terraform
+          command: |
+            curl -LO https://releases.hashicorp.com/terraform/1.0.0/terraform_1.0.0_linux_amd64.zip
+            unzip terraform_1.0.0_linux_amd64.zip
+            mv terraform /usr/local/bin/
+            terraform --version
+      - run:
+          name: Terraform Initialization
+          command: terraform init
 
   plan:
     executor: terraform-executor
     steps:
-      - checkout  # Check out the code from the repository
+      - checkout
       - run:
-          name: Terraform Validate
-          command: terraform validate  # Validate the Terraform configuration
+          name: Terraform Validation
+          command: terraform validate
       - run:
           name: Terraform Plan
+          command: terraform plan -out=tfplan_tgw
+      - persist_to_workspace:
+          root: .
+          paths:
+            - tfplan_tgw
+
+  approval:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - run:
+          name: Manual Approval
           command: |
-            terraform plan -out=tfplan_tgw  # Create a Terraform execution plan
-            echo "Saving plan to workspace"  # Inform about saving the plan
-            circleci workspace save tfplan_tgw  # Save the plan to CircleCI workspace
+            echo "Please review the plan and approve to continue."
 
   apply:
     executor: terraform-executor
     steps:
-      - checkout  # Check out the code from the repository
+      - checkout
+      - attach_workspace:
+          at: /workspace
       - run:
-          name: Apply the Terraform Plan
-          command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
-
-    approve_destroy:
-     type: approval  # Define a manual approval step for destruction
-
-  terraform_destroy:
-    executor: terraform-executor
-    steps:
-      - checkout  # Check out the code from the repository
-      - run:
-          name: Initialize Terraform
-          command: terraform init  # Initialize Terraform for destruction
-      - run:
-          name: Terraform Destroy
-          command: terraform destroy -auto-approve  # Destroy the infrastructure without confirmation
+          name: Terraform Apply
+          command: terraform apply /workspace/tfplan_tgw
 
 workflows:
   version: 2
-  tgw_deployment:
+  deploy:
     jobs:
-      - prepare  # Prepare the Terraform environment
+      - prepare
       - plan:
           requires:
-            - prepare  # Run the plan job after prepare
+            - prepare
+      - approval:
+          requires:
+            - plan
       - apply:
           requires:
-            - plan  # Apply the plan after the plan job
-      - approve_destroy:
-          requires:
-            - apply  # Wait for approval before destruction
-      - terraform_destroy:
-          requires:
-            - approve_destroy  # Destroy the infrastructure after approval
-          filters:
-            branches:
-              only: main  # Only run this job on the main branch
+            - approval
