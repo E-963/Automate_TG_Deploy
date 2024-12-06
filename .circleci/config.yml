@@ -74,24 +74,4 @@ workflows:
           requires:
             - approve-apply  # Apply the plan after approval
 
-  terraform_workflow:
-    jobs:
-      - plan:  # Ensure this matches the job name defined above
-          requires:
-            - prepare  # Ensure the prepare job runs before the plan
-      - approve-apply:
-          type: approval  # Define a manual approval step
-          requires:
-            - plan  # Wait for approval after the plan job
-      - apply:
-          requires:
-            - approve-apply  # Apply the plan after approval
-      - approve-destroy:
-          requires:
-            - apply  # Wait for approval before destruction
-      - terraform-destroy:
-          requires:
-            - approve-destroy  # Destroy the infrastructure after approval
-          filters:
-            branches:
-              only: main  # Only run this job on the main branch
+  
