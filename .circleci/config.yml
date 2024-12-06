@@ -1,7 +1,7 @@
 ---
 version: 2.1
 orbs:
-  terraform: circleci/terraform@1.2.1
+  terraform: circleci/terraform@1.5.0
 workflows:
   deploy_Automate_TG:
     jobs:
