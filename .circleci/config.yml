@@ -37,7 +37,7 @@ jobs:
           command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
 
     approve_destroy:
-    type: approval  # Define a manual approval step for destruction
+     type: approval  # Define a manual approval step for destruction
 
   terraform_destroy:
     executor: terraform-executor
