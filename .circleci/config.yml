@@ -21,7 +21,7 @@ jobs:
           name: Terraform Init
           command: terraform init  # Initialize Terraform configuration
 
-  plan:  # Ensure this job is defined
+  plan:
     executor: terraform-executor
     steps:
       - checkout  # Check out the code from the repository
@@ -35,9 +35,6 @@ jobs:
             echo "Saving plan to workspace"  # Inform about saving the plan
             circleci workspace save tfplan_tgw  # Save the plan to CircleCI workspace
 
-    manual_approval:
-      type: approval  # Define a manual approval step
-
   apply:
     executor: terraform-executor
     steps:
@@ -47,7 +44,7 @@ jobs:
           command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
 
     approve-destroy:
-      type: approval  # Define a manual approval step for destruction
+    type: approval  # Define a manual approval step for destruction
 
   terraform-destroy:
     executor: terraform-executor
@@ -69,12 +66,13 @@ workflows:
       - plan:  # Ensure this matches the job name defined above
           requires:
             - prepare  # Run the plan job after prepare
-      - manual_approval:
+      - approve-apply:
+          type: approval  # Define a manual approval step
           requires:
             - plan  # Wait for manual approval after the plan job
       - apply:
           requires:
-            - manual_approval  # Apply the plan after approval
+            - approve-apply  # Apply the plan after approval
 
   terraform_workflow:
     jobs:
@@ -82,6 +80,7 @@ workflows:
           requires:
             - prepare  # Ensure the prepare job runs before the plan
       - approve-apply:
+          type: approval  # Define a manual approval step
           requires:
             - plan  # Wait for approval after the plan job
       - apply:
