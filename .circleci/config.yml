@@ -1,75 +1,98 @@
 version: 2.1
 
+# Define the executors to be used in the jobs
 executors:
-  terraform:
+  terraform-executor:
     docker:
-      - image: hashicorp/terraform:1.5.0
-    working_directory: ~/repo
+      - image: hashicorp/terraform:1.5.0  # Use the official Terraform Docker image
+    working_directory: ~/repo  # Set the working directory for the executor
 
+# Define the jobs to be executed
 jobs:
-  terraform-plan:
-    executor: terraform
+  prepare:
+    executor: terraform-executor
     steps:
-      - checkout
+      - checkout  # Check out the code from the repository
       - run:
-          name: Install jq
-          command: apk add --no-cache jq  # Use this if your image supports apk (Alpine Linux)
+          name: Install AWS CLI
+          command: |
+            apt-get update && apt-get install -y awscli  # Install AWS CLI for AWS interactions
       - run:
-          name: Initialize Terraform
-          command: terraform init
+          name: Terraform Init
+          command: terraform init  # Initialize Terraform configuration
+
+  plan:
+    executor: terraform-executor
+    steps:
+      - checkout  # Check out the code from the repository
+      - run:
+          name: Terraform Validate
+          command: terraform validate  # Validate the Terraform configuration
       - run:
           name: Terraform Plan
-          command: terraform plan -out=tfplan
-      - run:
-          name: Review Plan Output
           command: |
-            terraform show -json tfplan | jq '.resource_changes[] | {type: .type, name: .name, change: .change}' > plan_output.json
-            cat plan_output.json  # Display the output in the console
+            terraform plan -out=tfplan_tgw  # Create a Terraform execution plan
+            echo "Saving plan to workspace"  # Inform about saving the plan
+            circleci workspace save tfplan_tgw  # Save the plan to CircleCI workspace
 
-    approve-apply:
-      type: approval
+  manual_approval:
+    type: approval  # Define a manual approval step
 
-  terraform-apply:
-    executor: terraform
+  apply:
+    executor: terraform-executor
     steps:
-      - checkout
+      - checkout  # Check out the code from the repository
       - run:
-          name: Initialize Terraform
-          command: terraform init
-      - run:
-          name: Terraform Apply
-          command: terraform apply -auto-approve
+          name: Apply the Terraform Plan
+          command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
 
-    approve-destroy:
-      type: approval
+  approve-destroy:
+    type: approval  # Define a manual approval step for destruction
 
   terraform-destroy:
-    executor: terraform
+    executor: terraform-executor
     steps:
-      - checkout
+      - checkout  # Check out the code from the repository
       - run:
           name: Initialize Terraform
-          command: terraform init
+          command: terraform init  # Initialize Terraform for destruction
       - run:
           name: Terraform Destroy
-          command: terraform destroy -auto-approve
+          command: terraform destroy -auto-approve  # Destroy the infrastructure without confirmation
 
+# Define the workflows to orchestrate the jobs
 workflows:
-  terraform-workflow:
+  version: 2
+  tgw_deployment:
     jobs:
-      - terraform-plan
+      - prepare  # Run the prepare job first
+      - plan:
+          requires:
+            - prepare  # Run the plan job after prepare
+      - manual_approval:
+          requires:
+            - plan  # Wait for manual approval after the plan job
+      - apply:
+          requires:
+            - manual_approval  # Apply the plan after approval
+
+  terraform_workflow:
+    jobs:
+      - terraform-plan:
+          requires:
+            - prepare  # Ensure the prepare job runs before the plan
       - approve-apply:
           requires:
-            - terraform-plan
+            - terraform-plan  # Wait for approval after the plan job
       - terraform-apply:
           requires:
-            - approve-apply
+            - approve-apply  # Apply the plan after approval
       - approve-destroy:
           requires:
-            - terraform-apply
+            - terraform-apply  # Wait for approval before destruction
       - terraform-destroy:
           requires:
-            - approve-destroy
+            - approve-destroy  # Destroy the infrastructure after approval
           filters:
             branches:
-              only: main
+              only: main  # Only run this job on the main branch
