@@ -20,7 +20,7 @@ resource "aws_security_group" "vpc_A_secgrp" {
   to_port           = 22
 }
 
- resource "aws_vpc_security_group_egress_rule" "allow_SSH-1" {
+ resource "aws_vpc_security_group_egress_rule" "allow_SSH" {
   security_group_id = aws_security_group.vpc_A_secgrp.id
   #cidr_ipv4        = aws_vpc.vpc_A_auto_trans.cidr_block
   cidr_ipv4         = "0.0.0.0/0"
@@ -57,7 +57,7 @@ resource "aws_security_group" "vpc_B_secgrp" {
   to_port           = 22
 }
 
- resource "aws_vpc_security_group_egress_rule" "allow_SSH-2" {
+ resource "aws_vpc_security_group_egress_rule" "Allow_ssh" {
   security_group_id = aws_security_group.vpc_B_secgrp.id
   #cidr_ipv4        = aws_vpc.vpc_B_auto_trans.cidr_block
   cidr_ipv4         = "0.0.0.0/0"
