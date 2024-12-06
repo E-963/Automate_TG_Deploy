@@ -1,77 +1,24 @@
+---
 version: 2.1
-
-# Define the executors to be used in the jobs
-executors:
-  terraform-executor:
-    docker:
-      - image: hashicorp/terraform:1.5.0  # Use the official Terraform Docker image
-    working_directory: ~/repo  # Set the working directory for the executor
-
-# Define the jobs to be executed
-jobs:
-  prepare:
-    executor: terraform-executor
-    steps:
-      - checkout
-      - run:
-          name: Install jq
-          command: apk add --no-cache jq  # Use this if your image supports apk (Alpine Linux)
-      - run:
-          name: Initialize Terraform
-          command: terraform init
-      - run:
-          name: Terraform Plan
-          command: terraform plan -out=tfplan
-      - run:
-          name: Review Plan Output
-          command: |
-            terraform show -json tfplan | jq '.resource_changes[] | {type: .type, name: .name, change: .change}' > plan_output.json
-            cat plan_output.json  # Display the output in the console
-
-    approve-apply:
-       type: approval
-
-  terraform-apply:
-    executor: terraform
-    steps:
-      - checkout
-      - run:
-          name: Initialize Terraform
-          command: terraform init
-      - run:
-          name: Terraform Apply
-          command: terraform apply -auto-approve
-
-    approve-destroy:
-      type: approval
-
-  terraform-destroy:
-    executor: terraform
-    steps:
-      - checkout
-      - run:
-          name: Initialize Terraform
-          command: terraform init
-      - run:
-          name: Terraform Destroy
-          command: terraform destroy -auto-approve
-
+orbs:
+  terraform: circleci/terraform@1.2.1
 workflows:
-  terraform-workflow:
+  deploy_Automate_TG:
     jobs:
-      - terraform-plan
-      - approve-apply:
-          requires:
-            - terraform-plan
-      - terraform-apply:
-          requires:
-            - approve-apply
-      - approve-destroy:
-          requires:
-            - terraform-apply
-      - terraform-destroy:
-          requires:
-            - approve-destroy
-          filters:
-            branches:
-              only: main
+    - terraform/validate:
+        checkout: true
+        context: terraform
+    - terraform/plan:
+        checkout: true
+        context: terraform
+        persist-workspace: true
+        requires:
+        - terraform/validate
+    - terraform/apply:
+        attach-workspace: true
+        context: terraform
+        filters:
+          branches:
+            only: main
+        requires:
+        - terraform/plan
