@@ -12,66 +12,66 @@ jobs:
   prepare:
     executor: terraform-executor
     steps:
-      - checkout  # Check out the code from the repository
+      - checkout
       - run:
-          name: Install AWS CLI
-          command: |
-            apt-get update && apt-get install -y awscli  # Install AWS CLI for AWS interactions
-      - run:
-          name: Terraform Init
-          command: terraform init  # Initialize Terraform configuration
-
-  plan:
-    executor: terraform-executor
-    steps:
-      - checkout  # Check out the code from the repository
-      - run:
-          name: Terraform Validate
-          command: terraform validate  # Validate the Terraform configuration
-      - run:
-          name: Terraform Plan
-          command: |
-            terraform plan -out=tfplan_tgw  # Create a Terraform execution plan
-            echo "Saving plan to workspace"  # Inform about saving the plan
-            circleci workspace save tfplan_tgw  # Save the plan to CircleCI workspace
-
-  apply:
-    executor: terraform-executor
-    steps:
-      - checkout  # Check out the code from the repository
-      - run:
-          name: Apply the Terraform Plan
-          command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
-
-    approve-destroy:
-    type: approval  # Define a manual approval step for destruction
-
-  terraform-destroy:
-    executor: terraform-executor
-    steps:
-      - checkout  # Check out the code from the repository
+          name: Install jq
+          command: apk add --no-cache jq  # Use this if your image supports apk (Alpine Linux)
       - run:
           name: Initialize Terraform
-          command: terraform init  # Initialize Terraform for destruction
+          command: terraform init
+      - run:
+          name: Terraform Plan
+          command: terraform plan -out=tfplan
+      - run:
+          name: Review Plan Output
+          command: |
+            terraform show -json tfplan | jq '.resource_changes[] | {type: .type, name: .name, change: .change}' > plan_output.json
+            cat plan_output.json  # Display the output in the console
+
+    approve-apply:
+       type: approval
+
+  terraform-apply:
+    executor: terraform
+    steps:
+      - checkout
+      - run:
+          name: Initialize Terraform
+          command: terraform init
+      - run:
+          name: Terraform Apply
+          command: terraform apply -auto-approve
+
+    approve-destroy:
+      type: approval
+
+  terraform-destroy:
+    executor: terraform
+    steps:
+      - checkout
+      - run:
+          name: Initialize Terraform
+          command: terraform init
       - run:
           name: Terraform Destroy
-          command: terraform destroy -auto-approve  # Destroy the infrastructure without confirmation
+          command: terraform destroy -auto-approve
 
-# Define the workflows to orchestrate the jobs
 workflows:
-  version: 2
-  tgw_deployment:
+  terraform-workflow:
     jobs:
-      - prepare  # Run the prepare job first
-      - plan:  # Ensure this matches the job name defined above
-          requires:
-            - prepare  # Run the plan job after prepare
+      - terraform-plan
       - approve-apply:
-          type: approval  # Define a manual approval step
           requires:
-            - plan  # Wait for manual approval after the plan job
-      - apply:
+            - terraform-plan
+      - terraform-apply:
           requires:
-            - approve-apply  # Apply the plan after approval
-
-  
+            - approve-apply
+      - approve-destroy:
+          requires:
+            - terraform-apply
+      - terraform-destroy:
+          requires:
+            - approve-destroy
+          filters:
+            branches:
+              only: main
