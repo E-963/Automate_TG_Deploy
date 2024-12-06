@@ -26,6 +26,6 @@
         8. Resources must be created at the us-east-1 region.
         9. Store state file backend into HCP.
         10. Resources must have common tags combination as below:
-        </aside>
+        
         
 ![alt text](<TG between 3VPCs (1).jpg>)
