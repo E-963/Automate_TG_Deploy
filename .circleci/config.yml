@@ -1,24 +1,90 @@
----
 version: 2.1
-orbs:
-  terraform: circleci/terraform@1.5.0
+
+executors:
+  terraform-executor:
+    docker:
+      - image: hashicorp/terraform:1.5.0  # Use the official Terraform Docker image
+
+jobs:
+  prepare:
+    executor: terraform-executor
+    steps:
+      - checkout  # Check out the code from the repository
+      - run:
+          name: Terraform Init
+          command: terraform init  # Initialize Terraform configuration
+
+  plan:
+    executor: terraform-executor
+    steps:
+      - checkout  # Check out the code from the repository
+      - run:
+          name: Terraform Validate
+          command: terraform validate  # Validate the Terraform configuration
+      - run:
+          name: Terraform Plan
+          command: |
+            terraform plan -out=tfplan_tgw  # Create a Terraform execution plan
+            echo "Saving plan to workspace"  # Inform about saving the plan
+            circleci workspace save tfplan_tgw  # Save the plan to CircleCI workspace
+
+    manual_approval:
+     type: approval  # Define a manual approval step
+
+  apply:
+    executor: terraform-executor
+    steps:
+      - checkout  # Check out the code from the repository
+      - run:
+          name: Apply the Terraform Plan
+          command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
+
+    approve_destroy:
+     type: approval  # Define a manual approval step for destruction
+
+  terraform_destroy:
+    executor: terraform-executor
+    steps:
+      - checkout  # Check out the code from the repository
+      - run:
+          name: Initialize Terraform
+          command: terraform init  # Initialize Terraform for destruction
+      - run:
+          name: Terraform Destroy
+          command: terraform destroy -auto-approve  # Destroy the infrastructure without confirmation
+
 workflows:
-  deploy_Automate_TG:
+  version: 2
+  tgw_deployment:
     jobs:
-    - terraform/validate:
-        checkout: true
-        context: terraform
-    - terraform/plan:
-        checkout: true
-        context: terraform
-        persist-workspace: true
-        requires:
-        - terraform/validate
-    - terraform/apply:
-        attach-workspace: true
-        context: terraform
-        filters:
-          branches:
-            only: main
-        requires:
-        - terraform/plan
+      - prepare  # Prepare the Terraform environment
+      - plan:
+          requires:
+            - prepare  # Run the plan job after prepare
+      - manual_approval:
+          requires:
+            - plan  # Wait for manual approval after the plan job
+      - apply:
+          requires:
+            - manual_approval  # Apply the plan after approval
+
+  terraform_workflow:
+    jobs:
+      - plan:
+          requires:
+            - prepare  # Ensure the prepare job runs before the plan
+      - approve_apply:
+          requires:
+            - plan  # Wait for approval after the plan job
+      - apply:
+          requires:
+            - approve_apply  # Apply the plan after approval
+      - approve_destroy:
+          requires:
+            - apply  # Wait for approval before destruction
+      - terraform_destroy:
+          requires:
+            - approve_destroy  # Destroy the infrastructure after approval
+          filters:
+            branches:
+              only: main  # Only run this job on the main branch
