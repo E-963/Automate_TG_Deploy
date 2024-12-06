@@ -21,7 +21,7 @@ jobs:
           name: Terraform Init
           command: terraform init  # Initialize Terraform configuration
 
-  plan:
+  plan:  # Ensure this job is defined
     executor: terraform-executor
     steps:
       - checkout  # Check out the code from the repository
@@ -35,8 +35,8 @@ jobs:
             echo "Saving plan to workspace"  # Inform about saving the plan
             circleci workspace save tfplan_tgw  # Save the plan to CircleCI workspace
 
-  manual_approval:
-    type: approval  # Define a manual approval step
+    manual_approval:
+      type: approval  # Define a manual approval step
 
   apply:
     executor: terraform-executor
@@ -46,8 +46,8 @@ jobs:
           name: Apply the Terraform Plan
           command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
 
-  approve-destroy:
-    type: approval  # Define a manual approval step for destruction
+    approve-destroy:
+      type: approval  # Define a manual approval step for destruction
 
   terraform-destroy:
     executor: terraform-executor
@@ -66,7 +66,7 @@ workflows:
   tgw_deployment:
     jobs:
       - prepare  # Run the prepare job first
-      - plan:
+      - plan:  # Ensure this matches the job name defined above
           requires:
             - prepare  # Run the plan job after prepare
       - manual_approval:
@@ -78,18 +78,18 @@ workflows:
 
   terraform_workflow:
     jobs:
-      - terraform-plan:
+      - plan:  # Ensure this matches the job name defined above
           requires:
             - prepare  # Ensure the prepare job runs before the plan
       - approve-apply:
           requires:
-            - terraform-plan  # Wait for approval after the plan job
-      - terraform-apply:
+            - plan  # Wait for approval after the plan job
+      - apply:
           requires:
             - approve-apply  # Apply the plan after approval
       - approve-destroy:
           requires:
-            - terraform-apply  # Wait for approval before destruction
+            - apply  # Wait for approval before destruction
       - terraform-destroy:
           requires:
             - approve-destroy  # Destroy the infrastructure after approval
