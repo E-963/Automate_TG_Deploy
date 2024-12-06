@@ -26,7 +26,7 @@ jobs:
             terraform show -json tfplan | jq '.resource_changes[] | {type: .type, name: .name, change: .change}' > plan_output.json
             cat plan_output.json  # Display the output in the console
 
-  approve-apply:
+    approve-apply:
     type: approval
 
   terraform-apply:
@@ -40,7 +40,7 @@ jobs:
           name: Terraform Apply
           command: terraform apply -auto-approve
 
-  approve-destroy:
+    approve-destroy:
     type: approval
 
   terraform-destroy:
