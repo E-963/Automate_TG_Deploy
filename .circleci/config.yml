@@ -3,68 +3,50 @@ version: 2.1
 executors:
   terraform-executor:
     docker:
-      - image: hashicorp/terraform:1.5.0  # Use the official Terraform Docker image
+      - image: hashicorp/terraform:latest
 
 jobs:
   prepare:
     executor: terraform-executor
     steps:
-      - checkout  # Check out the code from the repository
+      - checkout
+      - run:
+          name: Install AWS CLI
+          command: sudo apt-get install awscli
       - run:
           name: Terraform Init
-          command: terraform init  # Initialize Terraform configuration
+          command: terraform init
 
   plan:
     executor: terraform-executor
     steps:
-      - checkout  # Check out the code from the repository
-      - run:
-          name: Terraform Validate
-          command: terraform validate  # Validate the Terraform configuration
+      - checkout
       - run:
           name: Terraform Plan
-          command: |
-            terraform plan -out=tfplan_tgw  # Create a Terraform execution plan
-            echo "Saving plan to workspace"  # Inform about saving the plan
-            circleci workspace save tfplan_tgw  # Save the plan to CircleCI workspace
+          command: terraform plan -out=tfplan_tgw
+      - persist_to_workspace:
+          root: .
+          paths:
+            - tfplan_tgw
 
     manual_approval:
-     type: approval  # Define a manual approval step
+     type: approval
 
   apply:
     executor: terraform-executor
     steps:
-      - checkout  # Check out the code from the repository
+      - checkout
+      - attach_workspace:
+          at: .
       - run:
-          name: Apply the Terraform Plan
-          command: terraform apply "tfplan_tgw"  # Apply the saved Terraform plan
-
-    approve_destroy:
-     type: approval  # Define a manual approval step for destruction
-
-  terraform_destroy:
-    executor: terraform-executor
-    steps:
-      - checkout  # Check out the code from the repository
-      - run:
-          name: Initialize Terraform
-          command: terraform init  # Initialize Terraform for destruction
-      - run:
-          name: Terraform Destroy
-          command: terraform destroy -auto-approve  # Destroy the infrastructure without confirmation
+          name: Terraform Apply
+          command: terraform apply tfplan_tgw
 
 workflows:
   version: 2
-  tgw_deployment:
+  tgw_deploy:
     jobs:
-      - prepare  # Prepare the Terraform environment
-      - plan:
-          requires:
-            - prepare  # Run the plan job after prepare
-      - manual_approval:
-          requires:
-            - plan  # Wait for manual approval after the plan job
-      - apply:
-          requires:
-            - manual_approval  # Apply the plan after approval
-
+      - prepare
+      - plan
+      - manual_approval
+      - apply
