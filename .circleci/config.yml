@@ -3,85 +3,107 @@ version: 2.1
 executors:
   terraform-executor:
     docker:
-      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+      - image: hashicorp/terraform:latest
 
 jobs:
-  plan-apply:
-    working_directory: /tmp/project
-    docker:
-      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+  prepare:
+    executor: terraform-executor
     steps:
       - checkout
       - run:
-          name: Terraform Init & Plan
+          name: Install AWS CLI
           command: |
-            terraform init -input=false
-            terraform plan -out=tfapply 
+            apt-get update && apt-get install -y awscli
+      - run:
+          name: Install Terraform
+          command: |
+            curl -LO https://releases.hashicorp.com/terraform/1.0.0/terraform_1.0.0_linux_amd64.zip
+            unzip terraform_1.0.0_linux_amd64.zip
+            mv terraform /usr/local/bin/
+            terraform -version
+      - run:
+          name: Terraform Initialization
+          command: |
+            cd terraform
+            terraform init
+
+  plan:
+    executor: terraform-executor
+    steps:
+      - checkout
+      - run:
+          name: Terraform Validation
+          command: |
+            cd terraform
+            terraform validate
+      - run:
+          name: Terraform Plan
+          command: |
+            cd terraform
+            terraform plan -out=tfplan_tgw
       - persist_to_workspace:
-          root: .
+          root: terraform
           paths:
-            - .
+            - tfplan_tgw
+approval:
+  type: approval
 
   apply:
-    docker:
-      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    executor: terraform-executor
     steps:
+      - checkout
       - attach_workspace:
-          at: /tmp/project
+          at: /workspace
       - run:
           name: Terraform Apply
           command: |
-            terraform apply -auto-approve
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-
-  plan-destroy:
-    docker:
-      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
-    steps:
-      - attach_workspace:
-          at: /tmp/project
+            cd terraform
+            terraform apply /workspace/tfplan_tgw
       - run:
-          name: Terraform Create Destroy Plan
+          name: Check EC2 Internet Accessibility
           command: |
-            terraform plan -destroy -out=tfdestroy
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-
-  destroy:
-    docker:
-      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
-    steps:
-      - attach_workspace:
-          at: /tmp/project
-      - run:
-          name: Terraform Destroy
-          command: |
-            terraform destroy -auto-approve 
-
-workflows:
+            # Assuming you have SSH access to the EC2 instances
+            # Replace <EC2_PRIVATE_IP> with the actual private IP of the EC2 instance
+            ssh -o StrictHostKeyChecking=no ec2-user@<EC2_PRIVATE_IP> "dnf search httpd"
+            
   version: 2
+
   plan_approve_apply:
-    jobs:
-      - plan-apply
-      - hold-apply:
-          type: approval
-          requires:
-            - plan-apply
-      - apply:
-          requires:
-            - hold-apply
-      - plan-destroy:
-          requires:
-            - apply
-      - hold-destroy:
-          type: approval
-          requires:
-            - plan-destroy
-      - destroy:
-          requires:
-            - hold-destroy
+
+  jobs:
+
+  - plan-apply
+
+  - hold-apply:
+
+    type: approval
+
+  requires:
+
+  - plan-apply
+
+  - apply:
+
+    requires:
+
+  - hold-apply
+
+  - plan-destroy:
+
+    requires:
+
+  - apply
+
+  - hold-destroy:
+
+    type: approval
+
+    requires:
+
+  - plan-destroy
+
+  - destroy:
+
+    requires:
+
+  - hold-destroy            
