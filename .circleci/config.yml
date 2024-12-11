@@ -65,45 +65,5 @@ approval:
             # Assuming you have SSH access to the EC2 instances
             # Replace <EC2_PRIVATE_IP> with the actual private IP of the EC2 instance
             ssh -o StrictHostKeyChecking=no ec2-user@<EC2_PRIVATE_IP> "dnf search httpd"
-            
-  version: 2
 
-  plan_approve_apply:
-
-  jobs:
-
-  - plan-apply
-
-  - hold-apply:
-
-    type: approval
-
-  requires:
-
-  - plan-apply
-
-  - apply:
-
-    requires:
-
-  - hold-apply
-
-  - plan-destroy:
-
-    requires:
-
-  - apply
-
-  - hold-destroy:
-
-    type: approval
-
-    requires:
-
-  - plan-destroy
-
-  - destroy:
-
-    requires:
-
-  - hold-destroy            
+  
