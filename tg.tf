@@ -46,7 +46,7 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "TGW_Attachment_C" {
 
 # Create a transit gateway route table
 resource "aws_ec2_transit_gateway_route_table" "TG_rt" {
-  transit_gateway_id = aws_ec2_transit_gateway.tgw.id
+  transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
 
   tags = {
     Name = "TG_ec2_rt"
