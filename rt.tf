@@ -48,7 +48,7 @@ resource "aws_route_table_association" "rt-B-ass-2" {
 
 
 ### Create the route for subnet-C to internet gateway/public subnet
-resource "aws_route_table" "rt_3_pub_subnet" {
+resource "aws_route_table" "rt_C_pub_subnet" {
   vpc_id = aws_vpc.vpc_c_auto_trans.id
   
   route {
@@ -69,26 +69,26 @@ resource "aws_route_table" "rt_3_pub_subnet" {
 
 
 # Associate the route table to the public subnet
-resource "aws_route_table_association" "rt_pub_associate" {
+resource "aws_route_table_association" "rt_pub_sub_C_ass" {
   subnet_id      = aws_subnet.vpc_c_public_subnet.id  # Corrected to associate with the public subnet
-  route_table_id = aws_route_table.rt_3_pub_subnet.id
+  route_table_id = aws_route_table.rt_C_pub_subnet.id
 }
 
 
 ### Associate the route table to attachment
-resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-01" {
+resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-A" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.TGW_Attachment_A.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.TG_rt.id
 }
 
 ### Associate the route table to attachment
-resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-01" {
+resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-B" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.TGW_Attachment_B.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.TG_rt.id
 }
 
 ### Associate the route table to attachment
-resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-01" {
+resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-C" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.TGW_Attachment_C.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.TG_rt.id
 }

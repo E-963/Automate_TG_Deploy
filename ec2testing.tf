@@ -24,7 +24,7 @@ resource "aws_instance" "EC2_A_testing"{
 
 # EC2 Instance in VPC_B for Testing
 
-resource "aws_instance" "EC2_A_testing"{
+resource "aws_instance" "EC2_B_testing"{
     ami                    = "ami-005fc0f236362e99f"  #Ubuntu 22.04 AMI
     instance_type          = "t2.micro"
     subnet_id              = aws_subnet.vpc_B_private_subnet.id
