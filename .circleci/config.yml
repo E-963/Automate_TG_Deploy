@@ -3,77 +3,81 @@ version: 2.1
 executors:
   terraform-executor:
     docker:
-      - image: hashicorp/terraform:latest
-    working_directory: ~/repo  # Specify an absolute path
+      - image: hashicorp/terraform:light
+    working_directory: ~/repo
 
 jobs:
-  prepare:
+  plan-apply:
     executor: terraform-executor
     steps:
       - checkout
       - run:
-          name: Install jq
-          command: apk add --no-cache jq  # Use this if your image supports apk (Alpine Linux)
-      - run:
-          name: Terraform Init
-          command: terraform init
-
-  plan:
-    executor: terraform-executor
-    steps:
-      - checkout
-      - run:
-          name: Terraform Validate
-          command: terraform validate
-      - run:
-          name: Terraform Plan
+          name: Terraform Init & Plan
           command: |
-            terraform plan -out=tfplan_tgw
-            echo "Saving plan to workspace"
+            terraform init -input=false
+            terraform plan -out tfapply -var-file terraform.tfvars
       - persist_to_workspace:
           root: .
           paths:
-            - tfplan_tgw
+            - .
 
   apply:
     executor: terraform-executor
     steps:
-      - checkout
       - attach_workspace:
           at: .
       - run:
-          name: Apply the Terraform Plan
-          command: terraform apply "tfplan_tgw"
+          name: Terraform Apply
+          command: |
+            terraform apply -auto-approve tfapply
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
 
-  terraform-destroy:
-    executor: terraform-executor  # Correct the executor name here
+  plan-destroy:
+    executor: terraform-executor
     steps:
-      - checkout
+      - attach_workspace:
+          at: .
       - run:
-          name: Initialize Terraform
-          command: terraform init
+          name: Terraform Destroy Plan
+          command: |
+            terraform plan -destroy -out tfdestroy -var-file terraform.tfvars
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  destroy:
+    executor: terraform-executor
+    steps:
+      - attach_workspace:
+          at: .
       - run:
           name: Terraform Destroy
-          command: terraform destroy -auto-approve
+          command: |
+            terraform apply -auto-approve tfdestroy
 
 workflows:
   version: 2
-  tgw_deployment:
+  plan_approve_apply:
     jobs:
-      - prepare
-      - plan:
-          requires:
-            - prepare
-      - approve-destroy:  # Fix job name to match 'approve-destroy'
+      - plan-apply
+      - hold-apply:
           type: approval
           requires:
-            - plan
+            - plan-apply
       - apply:
           requires:
-            - approve-destroy
-      - terraform-destroy:
+            - hold-apply
+      - plan-destroy:
           requires:
-            - approve-destroy
-          filters:
-            branches:
-              only: main
+            - apply
+      - hold-destroy:
+          type: approval
+          requires:
+            - plan-destroy
+      - destroy:
+          requires:
+            - hold-destroy
