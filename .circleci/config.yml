@@ -4,7 +4,7 @@ executors:
   terraform-executor:
     docker:
       - image: hashicorp/terraform:latest
-    working_directory: /home/circleci/repo  # Specify an absolute path
+    working_directory: ~/repo  # Specify an absolute path
 
 jobs:
   prepare:
