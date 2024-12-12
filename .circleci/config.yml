@@ -12,9 +12,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install AWS CLI
-          command: |
-            sudo dnf install awscli
+          name: Install jq
+          command: apk add --no-cache jq  # Use this if your image supports apk (Alpine Linux)
       - run:
           name: Terraform Init
           command: terraform init
