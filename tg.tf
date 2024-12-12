@@ -1,4 +1,4 @@
-# Transit Gateway
+## Transit Gateway
 resource "aws_ec2_transit_gateway" "Auto_TG" {
   description = "Transit Gateway for Private to Public traffic management"
   tags = {
@@ -7,7 +7,7 @@ resource "aws_ec2_transit_gateway" "Auto_TG" {
     Owner = "SOO28"
   }
 }
-# Attach Subnet A and Subnet B(Private) to Transit Gateway
+## Attach Subnet A and Subnet B(Private) to Transit Gateway
 resource "aws_ec2_transit_gateway_vpc_attachment" "TGW_Attachment_A" {
   subnet_ids         = [aws_subnet.vpc_A_private_subnet.id]
   transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
