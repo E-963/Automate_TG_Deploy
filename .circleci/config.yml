@@ -4,7 +4,7 @@ executors:
   terraform-executor:
     docker:
       - image: hashicorp/terraform:latest
-    working_directory: ~/repo
+    working_directory: /home/circleci/repo  # Specify an absolute path
 
 jobs:
   prepare:
@@ -45,6 +45,17 @@ jobs:
           name: Apply the Terraform Plan
           command: terraform apply "tfplan_tgw"
 
+  terraform-destroy:
+    executor: terraform-executor  # Correct the executor name here
+    steps:
+      - checkout
+      - run:
+          name: Initialize Terraform
+          command: terraform init
+      - run:
+          name: Terraform Destroy
+          command: terraform destroy -auto-approve
+
 workflows:
   version: 2
   tgw_deployment:
@@ -53,10 +64,16 @@ workflows:
       - plan:
           requires:
             - prepare
-      - manual_approval:
+      - approve-destroy:  # Fix job name to match 'approve-destroy'
           type: approval
           requires:
             - plan
       - apply:
           requires:
-            - manual_approval
+            - approve-destroy
+      - terraform-destroy:
+          requires:
+            - approve-destroy
+          filters:
+            branches:
+              only: main
