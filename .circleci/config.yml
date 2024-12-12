@@ -3,7 +3,8 @@ version: 2.1
 executors:
   terraform-executor:
     docker:
-      - image: hashicorp/terraform:latest
+      - image: hashicorp/terraform:1.0.11
+    working_directory: ~/repo
 
 jobs:
   prepare:
@@ -15,55 +16,48 @@ jobs:
           command: |
             apt-get update && apt-get install -y awscli
       - run:
-          name: Install Terraform
-          command: |
-            curl -LO https://releases.hashicorp.com/terraform/1.0.0/terraform_1.0.0_linux_amd64.zip
-            unzip terraform_1.0.0_linux_amd64.zip
-            mv terraform /usr/local/bin/
-            terraform -version
-      - run:
-          name: Terraform Initialization
-          command: |
-            cd terraform
-            terraform init
+          name: Terraform Init
+          command: terraform init
 
   plan:
     executor: terraform-executor
     steps:
       - checkout
       - run:
-          name: Terraform Validation
-          command: |
-            cd terraform
-            terraform validate
+          name: Terraform Validate
+          command: terraform validate
       - run:
           name: Terraform Plan
           command: |
-            cd terraform
             terraform plan -out=tfplan_tgw
+            echo "Saving plan to workspace"
       - persist_to_workspace:
-          root: terraform
+          root: .
           paths:
             - tfplan_tgw
-approval:
-  type: approval
 
   apply:
     executor: terraform-executor
     steps:
       - checkout
       - attach_workspace:
-          at: /workspace
+          at: .
       - run:
-          name: Terraform Apply
-          command: |
-            cd terraform
-            terraform apply /workspace/tfplan_tgw
-      - run:
-          name: Check EC2 Internet Accessibility
-          command: |
-            # Assuming you have SSH access to the EC2 instances
-            # Replace <EC2_PRIVATE_IP> with the actual private IP of the EC2 instance
-            ssh -o StrictHostKeyChecking=no ec2-user@<EC2_PRIVATE_IP> "dnf search httpd"
+          name: Apply the Terraform Plan
+          command: terraform apply "tfplan_tgw"
 
-  
+workflows:
+  version: 2
+  tgw_deployment:
+    jobs:
+      - prepare
+      - plan:
+          requires:
+            - prepare
+      - manual_approval:
+          type: approval
+          requires:
+            - plan
+      - apply:
+          requires:
+            - manual_approval
