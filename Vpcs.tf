@@ -84,18 +84,3 @@ resource "aws_internet_gateway" "vpc_c_igw" {
   }
 }
 
-# Create the route for subnet-C to internet gateway/public subnet
-resource "aws_route_table" "rt_3_pub_subnet" {
-  vpc_id = aws_vpc.vpc_c_auto_trans.id
-  
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.vpc_c_igw.id
-  }
-}
-
-# Associate the route table to the public subnet
-resource "aws_route_table_association" "rt_pub_associate" {
-  subnet_id      = aws_subnet.vpc_c_public_subnet.id  # Corrected to associate with the public subnet
-  route_table_id = aws_route_table.rt_3_pub_subnet.id
-}
