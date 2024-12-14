@@ -67,8 +67,6 @@ resource "aws_route_table" "rt_C_pub_subnet" {
   }
 }
 
-
-
 ### Associate the route table to attachment 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-C" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.TGW_Attachment_C.id
