@@ -1,9 +1,3 @@
-# Create key pair for SSH access into EC2 instances
-resource "aws_key_pair" "key_1"{
-  key_name  = "key_1"
-  public_key = file("/home/sama@sky/.ssh/key_1.pub")
-}
-
 # EC2-A Instance in VPC_A for Testing
 
 resource "aws_instance" "EC2_A_testing"{
