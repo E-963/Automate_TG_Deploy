@@ -21,6 +21,17 @@ jobs:
           paths:
             - .
 
+  destroy:
+    executor: terraform-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Terraform Destroy
+          command: |
+            terraform apply -auto-approve tfdestroy        
+
+
   apply:
     executor: terraform-executor
     steps:
@@ -49,7 +60,7 @@ jobs:
           paths:
             - .
 
-  destroy:
+destroy:
     executor: terraform-executor
     steps:
       - attach_workspace:
