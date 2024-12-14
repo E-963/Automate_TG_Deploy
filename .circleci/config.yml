@@ -7,6 +7,29 @@ executors:
     working_directory: ~/repo
 
 jobs:
+  plan-destroy:
+    executor: terraform-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Terraform Destroy Plan
+          command: |
+            terraform plan -destroy -out tfdestroy 
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .          
+            
+  destroy:
+    executor: terraform-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Terraform Destroy
+          command: |
+            terraform apply -auto-approve tfdestroy
   plan-apply:
     executor: terraform-executor
     steps:
@@ -19,19 +42,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - .
-
-  destroy:
-    executor: terraform-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Terraform Destroy
-          command: |
-            terraform apply -auto-approve tfdestroy        
-
-
+            - .        
   apply:
     executor: terraform-executor
     steps:
@@ -46,7 +57,7 @@ jobs:
           paths:
             - .
 
-  plan-destroy:
+plan-destroy:
     executor: terraform-executor
     steps:
       - attach_workspace:
