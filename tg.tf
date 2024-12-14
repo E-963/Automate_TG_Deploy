@@ -33,7 +33,7 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "TGW_Attachment_B" {
 }
 
 resource "aws_ec2_transit_gateway_vpc_attachment" "TGW_Attachment_C" {
-  subnet_ids         = [aws_subnet.vpc_B_private_subnet.id]
+  subnet_ids         = [aws_subnet.vpc_c_public_subnet.id]
   transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
   vpc_id             = aws_vpc.vpc_c_auto_trans.id
 

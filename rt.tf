@@ -57,7 +57,7 @@ resource "aws_route_table" "rt_C_pub_subnet" {
   }
 
   route {  # route to vpc-1
-    cidr_block = "10.0.1.0/24"
+    cidr_block = "10.0.0.0/16"
     transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
   }
 
@@ -75,19 +75,7 @@ resource "aws_route_table_association" "rt_pub_sub_C_ass" {
 }
 
 
-### Associate the route table to attachment
-resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-A" {
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.TGW_Attachment_A.id
-  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.TG_rt.id
-}
-
-### Associate the route table to attachment
-resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-B" {
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.TGW_Attachment_B.id
-  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.TG_rt.id
-}
-
-### Associate the route table to attachment
+### Associate the route table to attachment 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw-rt-ass-C" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.TGW_Attachment_C.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.TG_rt.id
