@@ -15,12 +15,12 @@ jobs:
       - run:
           name: Terraform Destroy Plan
           command: |
-            terraform plan -destroy -out tfdestroy 
+            terraform plan -destroy -out tfdestroy
       - persist_to_workspace:
           root: .
           paths:
-            - .          
-            
+            - .
+
   destroy:
     executor: terraform-executor
     steps:
@@ -30,6 +30,7 @@ jobs:
           name: Terraform Destroy
           command: |
             terraform apply -auto-approve tfdestroy
+
   plan-apply:
     executor: terraform-executor
     steps:
@@ -38,11 +39,12 @@ jobs:
           name: Terraform Init & Plan
           command: |
             terraform init -input=false
-            terraform plan -out tfapply 
+            terraform plan -out tfapply
       - persist_to_workspace:
           root: .
           paths:
-            - .        
+            - .
+
   apply:
     executor: terraform-executor
     steps:
@@ -56,30 +58,6 @@ jobs:
           root: .
           paths:
             - .
-
-plan-destroy:
-    executor: terraform-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Terraform Destroy Plan
-          command: |
-            terraform plan -destroy -out tfdestroy 
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-
-destroy:
-    executor: terraform-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Terraform Destroy
-          command: |
-            terraform apply -auto-approve tfdestroy
 
 workflows:
   version: 2
@@ -101,13 +79,3 @@ workflows:
       - apply:
           requires:
             - hold-apply
-      - plan-destroy:
-          requires:
-            - apply
-      - hold-destroy:
-          type: approval
-          requires:
-            - plan-destroy
-      - destroy:
-          requires:
-            - hold-destroy
