@@ -15,8 +15,7 @@ jobs:
           name: Create HCP Workspaces
           command: |
             WORKSPACES=("dev" "staging" "production")  # Define your workspaces
-            for WORKSPACE in "${WORKSPACES[@]}"; do
-              terraform workspace new $WORKSPACE || echo "Workspace $WORKSPACE already exists"
+            terraform workspace new $WORKSPACE || echo "Workspace $WORKSPACE already exists"
             done
 
   plan-apply:
