@@ -19,6 +19,7 @@ jobs:
       - run:
           name: Review Plan Attributes
           command: |
+            apt-get update && apt-get install sudo
             sudo apt-get install jq
             cat plan.json | jq '.resource_changes[] | {address: .address, change: .change}'
       - persist_to_workspace:
