@@ -15,7 +15,7 @@ jobs:
           name: Terraform Init & Plan
           command: |
             terraform init -input=false
-            terraform plan -out tfapply -json > plan.json  # Output plan in JSON format
+            terraform plan -out tfapply 
       - run:
           name: Review Plan Attributes
           command: |
@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Terraform Destroy Plan
           command: |
-            terraform plan -destroy -out tfdestroy -json > destroy_plan.json
+            terraform plan -destroy -out tfdestroy 
       - run:
           name: Review Destroy Plan Attributes
           command: |
