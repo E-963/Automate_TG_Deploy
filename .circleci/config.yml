@@ -7,17 +7,6 @@ executors:
     working_directory: ~/repo
 
 jobs:
-  create-workspaces:
-    executor: terraform-executor
-    steps:
-      - checkout
-      - run:
-          name: Create HCP Workspaces
-          command: |
-            WORKSPACES=("dev" "staging" "production")  # Define your workspaces
-            terraform workspace new $WORKSPACE || echo "Workspace $WORKSPACE already exists"
-            done
-
   plan-apply:
     executor: terraform-executor
     steps:
@@ -62,7 +51,7 @@ jobs:
       - run:
           name: Review Destroy Plan Attributes
           command: |
-            cat destroy_plan.json | jq '.resource_changes[] | {address: .address, change: .change}'
+            cat destroy_plan.json | jq '.resource_changes[] | {address: .address, change: .change}' 
       - persist_to_workspace:
           root: .
           paths:
@@ -82,7 +71,6 @@ workflows:
   version: 2
   plan_approve_apply:
     jobs:
-      - create-workspaces  # Create workspaces first
       - plan-apply
       - hold-apply:
           type: approval
