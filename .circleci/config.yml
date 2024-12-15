@@ -16,12 +16,6 @@ jobs:
           command: |
             terraform init -input=false
             terraform plan -out tfapply 
-      - run:
-          name: Review Plan Attributes
-          command: |
-            apt-get update && apt-get install sudo
-            sudo apt-get install jq
-            cat plan.json | jq '.resource_changes[] | {address: .address, change: .change}'
       - persist_to_workspace:
           root: .
           paths:
@@ -50,11 +44,6 @@ jobs:
           name: Terraform Destroy Plan
           command: |
             terraform plan -destroy -out tfdestroy 
-      - run:
-          name: Review Destroy Plan Attributes
-          command: |
-            sudo apt-get install jq
-            cat destroy_plan.json | jq '.resource_changes[] | {address: .address, change: .change}' 
       - persist_to_workspace:
           root: .
           paths:
