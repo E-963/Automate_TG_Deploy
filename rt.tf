@@ -7,6 +7,15 @@ resource "aws_route_table" "rt-A" {
     cidr_block = "0.0.0.0/0"
     transit_gateway_id  = aws_ec2_transit_gateway.Auto_TG.id
   }
+  route {  # route to vpc-B
+    cidr_block = "10.1.0.0/16"
+    transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
+  }
+
+    route {  # route to vpc-C
+    cidr_block = "10.2.0.0/16"
+    transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
+  }
 
   tags = {
     Name        = "rt-A"
@@ -32,6 +41,17 @@ resource "aws_route_table" "rt-B" {
     cidr_block = "0.0.0.0/0"
     transit_gateway_id  = aws_ec2_transit_gateway.Auto_TG.id
   }
+
+  route {  # route to vpc-A
+    cidr_block = "10.0.0.0/16"
+    transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
+  }
+
+    route {  # route to vpc-C
+    cidr_block = "10.2.0.0/16"
+    transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
+  }
+
 
   tags = {
     Name        = "rt-B"
