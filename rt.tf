@@ -3,7 +3,12 @@ resource "aws_route_table" "rt-A" {
   vpc_id    = aws_vpc.vpc_A_auto_trans.id
 
  # Route all traffic through the Transit Gateway
- 
+
+    route {  # route to vpc-A
+    cidr_block = "10.0.0.0/16"
+    transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
+  }
+
   route {  # route to vpc-B
     cidr_block = "10.1.0.0/16"
     transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
@@ -34,9 +39,14 @@ resource "aws_route_table" "rt-B" {
   vpc_id    = aws_vpc.vpc_B_auto_trans.id
 
  # Route all traffic through the Transit Gateway
- 
+
   route {  # route to vpc-A
     cidr_block = "10.0.0.0/16"
+    transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
+  }
+
+  route {  # route to vpc-B
+    cidr_block = "10.1.0.0/16"
     transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
   }
 
@@ -78,6 +88,12 @@ resource "aws_route_table" "rt_C_pub_subnet" {
     cidr_block = "10.1.0.0/16"
     transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
   }
+
+  route {  # route to vpc-C
+    cidr_block = "10.2.0.0/16"
+    transit_gateway_id = aws_ec2_transit_gateway.Auto_TG.id
+  }
+
 }
 
 
