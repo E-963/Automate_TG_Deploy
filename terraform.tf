@@ -18,7 +18,6 @@ terraform {
 
     workspaces {
       name = "TRANS_workspace"
-      project = "Automate_Transitgateway_deploy"
     }
    }
 }
