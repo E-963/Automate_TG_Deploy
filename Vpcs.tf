@@ -51,7 +51,7 @@ resource "aws_subnet" "vpc_B_private_subnet" {
 ## VPC_C Configuration with Public Subnet
 ##########################################
 resource "aws_vpc" "vpc_c_auto_trans" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = "10.2.0.0/16"
   tags = {
     Name        = "vpc_c_auto_trans"
     Environment = "terraformChamps"
