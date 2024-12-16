@@ -14,7 +14,7 @@ resource "aws_security_group" "vpc_A_secgrp" {
   resource "aws_vpc_security_group_ingress_rule" "inbound-allow_all_traffic_ipv4_1" {
   security_group_id = aws_security_group.vpc_A_secgrp.id
   #cidr_ipv4        = aws_vpc.vpc_A_auto_trans.cidr_block
-  cidr_ipv4         = "0.0.0.0/0"     ## "This IP is not allowed for use in production; it's for testing only."
+  cidr_ipv4         = "10.0.0.0/16"     
   from_port         = 22
   ip_protocol       = "tcp"
   to_port           = 22
@@ -22,7 +22,7 @@ resource "aws_security_group" "vpc_A_secgrp" {
 
 resource "aws_vpc_security_group_egress_rule" "outbound-allow-all_traffic_ipv4_1" {
   security_group_id = aws_security_group.vpc_A_secgrp.id
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = "10.0.0.0/16"
   ip_protocol       = "-1"       # semantically equivalent to all ports
 }
 
@@ -43,7 +43,7 @@ resource "aws_security_group" "vpc_B_secgrp" {
   resource "aws_vpc_security_group_ingress_rule" "inbound-allow_all_traffic_ipv4_2" {
   security_group_id = aws_security_group.vpc_B_secgrp.id
   #cidr_ipv4        = aws_vpc.vpc_B_auto_trans.cidr_block
-  cidr_ipv4         = "0.0.0.0/0"        ## "This IP is not allowed for use in production; it's for testing only.
+  cidr_ipv4         = "10.1.0.0/16"        ## "This IP is not allowed for use in production; it's for testing only.
   from_port         = 22
   ip_protocol       = "tcp"
   to_port           = 22
@@ -51,7 +51,7 @@ resource "aws_security_group" "vpc_B_secgrp" {
 
 resource "aws_vpc_security_group_egress_rule" "outbound_allow_all_traffic_ipv4-2" {
   security_group_id = aws_security_group.vpc_B_secgrp.id
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = "10.1.0.0/16"
   ip_protocol       = "-1"          # semantically equivalent to all ports
 }
 
@@ -68,6 +68,14 @@ resource "aws_security_group" "bastion-host-sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
 
   egress {
     from_port   = 0
